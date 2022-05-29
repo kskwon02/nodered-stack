@@ -24,6 +24,7 @@ services:
     command: --config /data/dockerConfig.js
     volumes:
       - ./aedes-data:/data
+      - ./aedes_config.js:/data/dockerConfig.js
     ports:
       - '21883:1883'
       - '23000:3000'
@@ -39,6 +40,7 @@ services:
     #image: mvertes/alpine-mongo
     volumes:
       - ./mongo-data:/data/db
+      - ./mongo-configdb:/data/configdb
     ports:
       - "27017:27017"
   influxdb:
@@ -58,5 +60,50 @@ services:
        - ./grafana-data:/var/lib/grafana:rw
     ports:
       - "13000:3000"
+  syncthing:
+    image: syncthing/syncthing
+    #container_name: syncthing
+    #hostname: sync-xavier-002
+    networks:
+      - prod
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./data-sync:/var/syncthing
+      - ./nextcloud-app/data/admin/files/sync:/var/syncthing/data-sync
+    ports:
+      - 28384:8384 # Web UI
+      - 22000:22000/tcp # TCP file transfers
+      - 22000:22000/udp # QUIC file transfers
+      - 21027:21027/udp # Receive local discovery broadcasts
+    restart: unless-stopped
+  nextcloud-db:
+    image: mariadb
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    restart: always
+    networks:
+      - prod
+    ports:
+      - 33306:3306
+    volumes:
+      - ./nextcloud-db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=nextcloud
+      - MYSQL_PASSWORD=nextcloud
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+  nextcloud-app:
+    image: nextcloud
+    networks:
+      - prod
+    ports:
+      - 38080:80
+    links:
+      - nextcloud-db
+    volumes:
+      - ./nextcloud-app:/var/www/html
+      - ./data-sync/share:/mnt/share
+    restart: always
 networks:
   prod:

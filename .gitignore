@@ -1,0 +1,12 @@
+## folder
+influxdb-data/
+influxdb2-data/
+mongo-data/    
+mongo-configdb/    
+nodered-data/
+nodered-static/
+aedes-data/  
+grafana-data/        
+data-sync/
+nextcloud-app/
+nextcloud-db/
