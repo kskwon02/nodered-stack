@@ -1,0 +1,62 @@
+version: "3"
+# NODERED Stack arm64
+# https://nodered.org/docs/getting-started/docker
+services:
+  node-red:
+    image: nodered/node-red:latest
+    environment:
+      - TZ=Asia/Seoul
+    ports:
+      - 21880:1880
+    networks:
+      - prod
+    volumes:
+    # it seems it doesn't work - `./volumes/node-red` is permanently empty
+      - ./nodered-data:/data
+      - ./nodered-static:/node-red-static
+  aedes:
+  # container_name: aedes
+    image: moscajs/aedes:latest
+    restart: always
+    stop_signal: SIGINT
+    networks:
+      - prod
+    command: --config /data/dockerConfig.js
+    volumes:
+      - ./aedes-data:/data
+    ports:
+      - '21883:1883'
+      - '23000:3000'
+      - '24000:4000'
+      - '28883:8883'
+  mongo:
+  # container_name: mongo
+    networks:
+      - prod
+    logging:
+      driver: none
+    image: mongo:5.0.6-focal
+    #image: mvertes/alpine-mongo
+    volumes:
+      - ./mongo-data:/data/db
+    ports:
+      - "27017:27017"
+  influxdb:
+    image: influxdb:1.8.10
+    networks:
+      - prod
+    volumes:
+      - ./influxdb-data:/var/lib/influxdb
+      - ./influxdb2-data:/var/lib/influxdb2
+    ports:
+      - "8086:8086"
+  grafana:
+    image: grafana/grafana:5.4.4
+    networks:
+      - prod
+    volumes:
+       - ./grafana-data:/var/lib/grafana:rw
+    ports:
+      - "13000:3000"
+networks:
+  prod:
